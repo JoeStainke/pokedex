@@ -1,4 +1,7 @@
 import { createInterface } from "node:readline";
+import { commandExit } from "./command_exit.js";
+import { commandHelp } from "./command_help.js";
+import { CLICommand } from "./command.js";
 
 export function cleanInput(input: string): string[] {
   return input.trim().toLowerCase().split(/\s+/); // regex for one or more whitespace characters
@@ -14,11 +17,35 @@ export function startREPL() {
 
   rl.on("line", (input: string) => {
     const words = cleanInput(input);
-    if (!cleanInput(input).length) {
+    if (!words.length) {
       rl.prompt();
-    } else {
-      console.log(`Your command was: ${cleanInput(words[0])}`);
-      rl.prompt(); // Call prompt again to continue the loop
     }
+
+    if (getCommands()[words[0]]) {
+      try {
+        getCommands()[words[0]].callback(getCommands());
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      console.log("Unknown command");
+    }
+
+    rl.prompt()
   });
+}
+
+export function getCommands(): Record<string, CLICommand> {
+  return {
+    exit: {
+      name: "exit",
+      description: "Exits the pokedex",
+      callback: commandExit,
+    },
+    help: {
+      name: "help",
+      description: "Displays a help message",
+      callback: commandHelp,
+    },
+  };
 }
